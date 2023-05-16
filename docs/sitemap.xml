@@ -28,6 +28,9 @@
     <loc>/reference/MiMeMo.tools-package.html</loc>
   </url>
   <url>
+    <loc>/reference/NEMO_ERSEM.html</loc>
+  </url>
+  <url>
     <loc>/reference/NEMO_MEDUSA.html</loc>
   </url>
   <url>
@@ -155,6 +158,9 @@
   </url>
   <url>
     <loc>/reference/mync_get_pixel.html</loc>
+  </url>
+  <url>
+    <loc>/reference/nemoRsem-package.html</loc>
   </url>
   <url>
     <loc>/reference/nemomedusR-package.html</loc>

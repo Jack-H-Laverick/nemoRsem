@@ -36,6 +36,7 @@ reference:
   contents:
   - extractors_slabR
   - extractors_1D
+  - extractors_SE2E
 - subtitle: Schemes
   desc: Functions to create common slabR summary schemes.
   contents:
@@ -49,6 +50,7 @@ reference:
   desc: Average the pulled variables to user specifications.
   contents:
   - array_w_mean
+  - stratify
   - temporal_operation
 - title: Spatial utilities
   desc: Handle spatial weighting for averages, depth layers, and map projections.
