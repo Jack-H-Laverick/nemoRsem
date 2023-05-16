@@ -1,7 +1,7 @@
-Package: nemoRsem
+Package: nemomedusR
 Type: Package
-Title: Tools for summarising NEMO-ERSEM model output
-Version: 0.1.0.0
+Title: Tools for summarising NEMO-MEDUSA model output
+Version: 1.1.0.1
 Authors@R: 
     person(given = "Jack H",
            family = "Laverick",
@@ -9,12 +9,12 @@ Authors@R:
            email = "jacklaverick@ymail.com",
            comment = c(ORCID = "0000-0001-8829-2084"))
 Maintainer: Jack H Laverick <jacklaverick@ymail.com>
-Description: This package helps produce common spatial and temporal summaries from NEMO-ERSEM model output.
+Description: This package helps produce common spatial and temporal summaries from NEMO-MEDUSA model output.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-URL: https://jack-h-laverick.github.io/nemoRsem/, https:github.com/Jack-H-Laverick/nemoRsem
-BugReports: https:github.com/Jack-H-Laverick/nemoRsem/issues
+URL: https://jack-h-laverick.github.io/nemomedusR/, https:github.com/Jack-H-Laverick/nemomedusR
+BugReports: https:github.com/Jack-H-Laverick/nemomedusR/issues
 LinkingTo: Rcpp, RcppArmadillo
 Depends:
   data.table,
@@ -27,7 +27,7 @@ Imports:
   sf,
   RcppRoll,
   Rcpp,
-RoxygenNote: 7.2.2
+RoxygenNote: 7.1.2
 Suggests: 
     knitr,
     rmarkdown,
