@@ -13,16 +13,13 @@
 #'
 #' | File type &nbsp; &nbsp; &nbsp; &nbsp;| Variables    |
 #' |--------------|-------------|
-#' | grid_T_      | Salinity, temperature, sea ice concentration.|
+#' | grid_T_      | Salinity, temperature.|
 #' | grid_U_      | Zonal currents.|
 #' | grid_V_      | Meridional currents.|
 #' | grid_W_      | Vertical velocity, vertical eddy diffusivitiy.|
-#' | icemod_      | Ice presence, ice thickness, snow thickness.|
-#' | ptrc_T_      | DIN, phytoplankton nitrogen content.|
+#' | ptrc_T_      | N03, NH4, Detrital N, phytoplankton nitrogen content.|
 #'
 #' Some function variants have different arguments:
-#'
-#' grid_T_ and icemod_ functions accept an `ice_scheme`. Cryosphere data is contained in matrices not arrays.
 #'
 #' grid_W_ expects it's own `scheme_w` as depth levels are different between these and other files. it also expects it's
 #' own `start_w` and `count_w`.
@@ -36,7 +33,6 @@
 #' @param scheme_w as above but for grid_W files.
 #' @param start_w as above but for grid_W files.
 #' @param count_w as above but for grid_W files.
-#' @param ice_scheme a separate summary scheme for the 2D ice variables.
 #' @param ... soaks up unused function arguments passed by the wrapper functions handling file architecture.
 #' @return A matrix with a column of group averages per title variable for a single day.
 #' @family NEMO-ERSEM variable extractors
@@ -45,19 +41,16 @@ NULL
 
 #' @rdname extractors_slabR
 #' @export
-get_grid_T_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ice_scheme, ...) {
+get_grid_T_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
   nc_saline <- ncdf4::ncvar_get(nc_raw, "vosaline", start, count)      # Extract an array of salinities
   nc_temp <- ncdf4::ncvar_get(nc_raw, "votemper", start, count)        # Extract an array of temperatures
-  nc_ice <- ncdf4::ncvar_get(nc_raw, "soicecov", start[-3], count[-3]) # Extract a matrix of ice fractions
   ncdf4::nc_close(nc_raw)                                                      # You must close an open netcdf file when finished to avoid data loss
 
   all <- cbind(                                                                # Bind as columns
     Salinity = array_w_mean(nc_saline, scheme),                                # Summarise salinity according to scheme
-    Temperature = array_w_mean(nc_temp, scheme),                               # Summarise temperature according to scheme
-    Ice_conc  = c(nc_ice[ice_scheme],                                          # Subset ice instead of average as it's 2D
-                  rep(NA, max(scheme$group)-length(ice_scheme))))              # Introduce NAs to fill deep layer summaries
+    Temperature = array_w_mean(nc_temp, scheme))                               # Summarise temperature according to scheme
 
     return(all)
 }
@@ -67,17 +60,24 @@ get_grid_T_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-
 get_ptrc_T_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
-  nc_DIN <- ncdf4::ncvar_get(nc_raw, "DIN", start, count)      # Extract an array for the variable
-  nc_DET <- ncdf4::ncvar_get(nc_raw, "DET", start, count)
-  nc_PHD <- ncdf4::ncvar_get(nc_raw, "PHD", start, count)
-  nc_PHN <- ncdf4::ncvar_get(nc_raw, "PHN", start, count)
-  nc_Phyt <- nc_PHD + nc_PHN
+  nc_NO3 <- ncdf4::ncvar_get(nc_raw, "N3n", start, count)                      # Extract an array for the variable
+  nc_NH4 <- ncdf4::ncvar_get(nc_raw, "N4n", start, count)
+  nc_DET <- ncdf4::ncvar_get(nc_raw, "Q1n", start, count)
+#  nc_PHD <- ncdf4::ncvar_get(nc_raw, "PHD", start, count)
+#  nc_PHN <- ncdf4::ncvar_get(nc_raw, "PHN", start, count)
+#  nc_Phyt <- nc_PHD + nc_PHN
+  nc_Chl1 <- ncvar_get(nc_raw, "Chl1", start3D, count3D)
+  nc_Chl2 <- ncvar_get(nc_raw, "Chl2", start3D, count3D)
+  nc_Chl3 <- ncvar_get(nc_raw, "Chl3", start3D, count3D)
+  nc_Chl4 <- ncvar_get(nc_raw, "Chl4", start3D, count3D)
+  nc_Chl <- nc_Chl1 + nc_Chl2 + nc_Chl3 + nc_Chl4 ; rm(nc_Chl1, nc_Chl2, nc_Chl3, nc_Chl4)
   ncdf4::nc_close(nc_raw)                                                          # You must close an open netcdf file when finished to avoid data loss
 
   all <- cbind(                                                                    # Bind as matrix
-    DIN = array_w_mean(nc_DIN, scheme),                                            # summarise DIN according to scheme
+    NO3 = array_w_mean(nc_NO3, scheme),                                            # summarise dissolved nitrate according to scheme
+    NH4 = array_w_mean(nc_NH4, scheme),                                            # summarise Dissolved ammonium according to scheme
     Detritus = array_w_mean(nc_DET, scheme),                                       # summarise Detritus according to scheme
-    Phytoplankton = array_w_mean(nc_Phyt, scheme))                                 # summarise Phytoplankton according to scheme
+    Chlorophyll = array_w_mean(nc_Chl, scheme))                                    # summarise Chlorophyll according to scheme
     return(all)
 }
 
@@ -120,22 +120,3 @@ get_grid_U_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-
   return(all)
 }
 
-#' @rdname extractors_slabR
-#' @export
-get_icemod_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ice_scheme, ...) {
-
-  nc_raw <- ncdf4::nc_open(paste0(path, file))           # Open up a netcdf file to see it's raw contents (var names)
-  nc_Ice <- ncdf4::ncvar_get(nc_raw, "ice_pres", start[-3], count[-3])# Extract a matrix of ice presence
-  nc_Ithick <- ncdf4::ncvar_get(nc_raw, "iicethic", start[-3], count[-3]) # Extract ice thicknesses
-  nc_Sthick <- ncdf4::ncvar_get(nc_raw, "isnowthi", start[-3], count[-3]) # Extract snow thicknesses
-  ncdf4::nc_close(nc_raw)                                # You must close an open netcdf file when finished to avoid data loss
-
-    all <- cbind(                                                     # Bind as a matrix
-    Ice_pres = c(nc_Ice[ice_scheme],                                  # Subset ice instead of average as it's 2D
-                 rep(NA, max(scheme$group)-length(ice_scheme))),      # Introduce NAs to fill deep layer summaries
-    Ice_Thickness = c(nc_Ithick[ice_scheme],                          # Subset ice instead of average as it's 2D
-                      rep(NA, max(scheme$group)-length(ice_scheme))),
-    Snow_Thickness = c(nc_Sthick[ice_scheme],
-                       rep(NA, max(scheme$group)-length(ice_scheme))))
-    return(all)
-}
