@@ -7,7 +7,6 @@
 \alias{get_grid_W_slabR}
 \alias{get_grid_V_slabR}
 \alias{get_grid_U_slabR}
-\alias{get_icemod_slabR}
 \title{Extract summaries from NEMO-ERSEM arrays using slabR}
 \usage{
 get_grid_T_slabR(
@@ -16,7 +15,6 @@ get_grid_T_slabR(
   scheme,
   start = c(1, 1, 1, 1),
   count = c(-1, -1, -1, -1),
-  ice_scheme,
   ...
 )
 
@@ -55,16 +53,6 @@ get_grid_U_slabR(
   count = c(-1, -1, -1, -1),
   ...
 )
-
-get_icemod_slabR(
-  path,
-  file,
-  scheme,
-  start = c(1, 1, 1, 1),
-  count = c(-1, -1, -1, -1),
-  ice_scheme,
-  ...
-)
 }
 \arguments{
 \item{path}{the path to the NEMO-ERSEM model outputs.}
@@ -76,8 +64,6 @@ get_icemod_slabR(
 \item{start}{an optional vector of indices to start subsetting at. See ncdf4 documentation.}
 
 \item{count}{an optional vector of steps to subset along. See ncdf4 documentation.}
-
-\item{ice_scheme}{a separate summary scheme for the 2D ice variables.}
 
 \item{...}{soaks up unused function arguments passed by the wrapper functions handling file architecture.}
 
@@ -100,18 +86,15 @@ with \code{start} and \code{count}. The values are then passed to \code{array_w_
 
 Each model output file type contains a different set of variables, extracted by the relevant function variant:\tabular{ll}{
    File type         \tab Variables \cr
-   grid_T_ \tab Salinity, temperature, sea ice concentration. \cr
+   grid_T_ \tab Salinity, temperature. \cr
    grid_U_ \tab Zonal currents. \cr
    grid_V_ \tab Meridional currents. \cr
    grid_W_ \tab Vertical velocity, vertical eddy diffusivitiy. \cr
-   icemod_ \tab Ice presence, ice thickness, snow thickness. \cr
-   ptrc_T_ \tab DIN, phytoplankton nitrogen content. \cr
+   ptrc_T_ \tab N03, NH4, Detrital N, phytoplankton nitrogen content. \cr
 }
 
 
 Some function variants have different arguments:
-
-grid_T_ and icemod_ functions accept an \code{ice_scheme}. Cryosphere data is contained in matrices not arrays.
 
 grid_W_ expects it's own \code{scheme_w} as depth levels are different between these and other files. it also expects it's
 own \code{start_w} and \code{count_w}.
