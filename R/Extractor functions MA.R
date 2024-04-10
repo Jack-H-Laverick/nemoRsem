@@ -16,9 +16,8 @@
 #' @return A matrix with a column of group averages per title variable. If multiple days have been extracted these run sequentially within a column.
 #' @family NEMO-ERSEM variable extractors
 #' @export
-NULL
 
-process_array <- function(array, scheme = scheme, count = count, collapse_days = TRUE) {
+process_array <- function(array, scheme, count, collapse_days) {
 
   # If there are multiple depths and a single time step then slabR is fine as dim4 is dropped
   if(count[3] != 1 & count[4] == 1) {
@@ -120,133 +119,158 @@ NULL
 
 #' @rdname extractors_MA
 #' @export
-get_so_abs_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_so_abs_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
   nc_saline <- ncdf4::ncvar_get(nc_raw, "so_abs", start, count)                # Extract an array of salinities
   ncdf4::nc_close(nc_raw)                                                      # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(                                                                # Bind as columns
-    Salinity = array_w_mean(rowMeans(na.rm = T,nc_saline, dims = 3), scheme))                                # Summarise salinity according to scheme
+  # all <- cbind(                                                                # Bind as columns
+  #   Salinity = array_w_mean(rowMeans(na.rm = T,nc_saline, dims = 3), scheme))                                # Summarise salinity according to scheme
+
+  all <- cbind(Salinity = process_array(nc_saline, scheme, count, collapse_days))
 
   return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_thetao_con_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_thetao_con_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
   nc_temp <- ncdf4::ncvar_get(nc_raw, "thetao_con", start, count)              # Extract an array of temperatures
   ncdf4::nc_close(nc_raw)                                                      # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(                                                                # Bind as columns
-    Temperature = array_w_mean(rowMeans(na.rm = T,nc_temp, dims = 3), scheme))                               # Summarise temperature according to scheme
+  # all <- cbind(                                                                # Bind as columns
+  #   Temperature = array_w_mean(rowMeans(na.rm = T,nc_temp, dims = 3), scheme))                               # Summarise temperature according to scheme
+
+  all <- cbind(Temperature = process_array(nc_temp, scheme, count, collapse_days))
 
     return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_R1_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_R1_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
   nc_DON <- ncdf4::ncvar_get(nc_raw, "R1_n", start, count)                       # Extract an array for the variable
   ncdf4::nc_close(nc_raw)                                                      # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(                                                                    # Bind as matrix
-    DON = array_w_mean(rowMeans(na.rm = T,nc_DON, dims = 3), scheme))                                    # summarise Dissolved Organic Nitrogen
-    return(all)
+  # all <- cbind(                                                                    # Bind as matrix
+  #   DON = array_w_mean(rowMeans(na.rm = T,nc_DON, dims = 3), scheme))                                    # summarise Dissolved Organic Nitrogen
+
+  all <- cbind(DON = process_array(nc_DON, scheme, count, collapse_days))
+
+  return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_O2_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_O2_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                     # Open up a netcdf file to see it's raw contents (var names)
   nc_O2 <- ncdf4::ncvar_get(nc_raw, "O2_o", start, count)                          # Extract an array for the variable
   ncdf4::nc_close(nc_raw)                                                          # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(                                                                    # Bind as matrix
-    O2 = array_w_mean(rowMeans(na.rm = T,nc_O2, dims = 3), scheme))                                              # summarise dissolved oxygen according to scheme
+  # all <- cbind(                                                                    # Bind as matrix
+  #   O2 = array_w_mean(rowMeans(na.rm = T,nc_O2, dims = 3), scheme))                                              # summarise dissolved oxygen according to scheme
+
+  all <- cbind(O2 = process_array(nc_O2, scheme, count, collapse_days))
+
   return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_N4_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_N4_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
   nc_NH4 <- ncdf4::ncvar_get(nc_raw, "N4_n", start, count)
   ncdf4::nc_close(nc_raw)                                                          # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(                                                                    # Bind as matrix
-    NH4 = array_w_mean(rowMeans(na.rm = T,nc_NH4, dims = 3), scheme))                                            # summarise Dissolved ammonium according to scheme
+  # all <- cbind(                                                                    # Bind as matrix
+  #   NH4 = array_w_mean(rowMeans(na.rm = T,nc_NH4, dims = 3), scheme))                                            # summarise Dissolved ammonium according to scheme
+
+  all <- cbind(NH4 = process_array(nc_NH4, scheme, count, collapse_days))
+
   return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_N3_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_N3_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
   nc_NO3 <- ncdf4::ncvar_get(nc_raw, "N3_n", start, count)                       # Extract an array for the variable
   ncdf4::nc_close(nc_raw)                                                      # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(                                                                # Bind as matrix
-    NO3 = array_w_mean(rowMeans(na.rm = T,nc_NO3, dims = 3), scheme))                                        # summarise dissolved nitrate according to scheme
+  # all <- cbind(                                                                # Bind as matrix
+  #   NO3 = array_w_mean(rowMeans(na.rm = T,nc_NO3, dims = 3), scheme))                                        # summarise dissolved nitrate according to scheme
+
+  all <- cbind(NO3 = process_array(nc_NO3, scheme, count, collapse_days))
+
   return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_RP_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_RP_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
     nc_DET <- ncdf4::ncvar_get(nc_raw, "RP_n_result", start, count)
   ncdf4::nc_close(nc_raw)                                                          # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(                                                                    # Bind as matrix
-        Detritus = array_w_mean(rowMeans(na.rm = T,nc_DET, dims = 3), scheme))                                   # summarise Detritus according to scheme
-  return(all)
+  # all <- cbind(                                                                    # Bind as matrix
+  #       Detritus = array_w_mean(rowMeans(na.rm = T,nc_DET, dims = 3), scheme))                                   # summarise Detritus according to scheme
+
+  all <- cbind(Detritus = process_array(nc_DET, scheme, count, collapse_days))
+
+    return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_B1_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_B1_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
   nc_B1 <- ncdf4::ncvar_get(nc_raw, "B1_n", start, count)                        # Extract an array for the variable
   ncdf4::nc_close(nc_raw)                                                      # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(                                                                # Bind as matrix
-    Bacteria = array_w_mean(rowMeans(na.rm = T,nc_B1, dims = 3), scheme))                                    # summarise Bacterial nitrogen according to scheme
+  # all <- cbind(                                                                # Bind as matrix
+  #   Bacteria = array_w_mean(rowMeans(na.rm = T,nc_B1, dims = 3), scheme))                                    # summarise Bacterial nitrogen according to scheme
+
+  all <- cbind(Bacteria = process_array(nc_B1, scheme, count, collapse_days))
   return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_P1_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_P1_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
   nc_PHD <- ncdf4::ncvar_get(nc_raw, "P1_n", start, count)
   ncdf4::nc_close(nc_raw)                                                      # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(                                                                # Bind as matrix
-    Diatoms = array_w_mean(rowMeans(na.rm = T,nc_PHD, dims = 3), scheme))                                    # summarise Diatoms according to scheme
+  # all <- cbind(                                                                # Bind as matrix
+  #   Diatoms = array_w_mean(rowMeans(na.rm = T,nc_PHD, dims = 3), scheme))                                    # summarise Diatoms according to scheme
+  all <- cbind(Diatoms = process_array(nc_PHD, scheme, count, collapse_days))
+
   return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_P234_n_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_P234_n_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
   nc_PHO <- ncdf4::ncvar_get(nc_raw, "P234_n_result", start, count)
   ncdf4::nc_close(nc_raw)                                                      # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(                                                                # Bind as matrix
-    Other_phytoplankton = array_w_mean(rowMeans(na.rm = T,nc_PHO, dims = 3), scheme))                        # summarise Phytoplankton according to scheme
+  # all <- cbind(                                                                # Bind as matrix
+  #   Other_phytoplankton = array_w_mean(rowMeans(na.rm = T,nc_PHO, dims = 3), scheme))                        # summarise Phytoplankton according to scheme
+
+  all <- cbind(Other_phytoplankton = process_array(nc_PHO, scheme, count, collapse_days))
   return(all)
 }
 
@@ -265,14 +289,14 @@ get_difvho_slabR   <- function(path, file, scheme, start = c(1,1,1,1), count = c
   #   right_join(scheme)
 
   all <- cbind(                                                                # Bind as matrix
-    Vertical_diffusivity = process_array(nc_dif, collapse_days = collapse_days))
+    Vertical_diffusivity = process_array(nc_dif, scheme, count, collapse_days))
 
   return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_wo_slabR   <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_wo_slabR   <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
   nc_vel <- ncdf4::ncvar_get(nc_raw, "wo", start, count)                       # Extract an array for the variable
@@ -288,32 +312,34 @@ get_wo_slabR   <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,
   #   Vertical_velocity = Vertical_velocity$Vertical_velocity)
 
   all <- cbind(                                                                # Bind as matrix
-    Vertical_velocity = process_array(nc_vel, collapse_days = collapse_days))
+    Vertical_velocity = process_array(nc_vel, scheme, count, collapse_days))
 
   return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_vo_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_vo_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                               # Open up a netcdf file to see it's raw contents (var names)
   nc_merid <- ncdf4::ncvar_get(nc_raw, "vo", start, count)         # Pull meridinal currents
   ncdf4::nc_close(nc_raw)                                                    # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(Meridional = array_w_mean(rowMeans(na.rm = T,nc_merid, dims = 3), scheme))                  # summarise meridional currents according to scheme
+#  all <- cbind(Meridional = array_w_mean(rowMeans(na.rm = T,nc_merid, dims = 3), scheme))                  # summarise meridional currents according to scheme
+  all <- cbind(Meridional = process_array(nc_merid, scheme, count, collapse_days))
   return(all)
 }
 
 #' @rdname extractors_MA
 #' @export
-get_uo_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
+get_uo_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), collapse_days = TRUE, ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                               # Open up a netcdf file to see it's raw contents (var names)
   nc_zonal <- ncdf4::ncvar_get(nc_raw, "uo", start, count) # Pull zonal current
   ncdf4::nc_close(nc_raw)                                                    # You must close an open netcdf file when finished to avoid data loss
 
-  all <- cbind(Zonal = array_w_mean(rowMeans(na.rm = T,nc_zonal, dims = 3), scheme))                       # summarise zonal currents according to scheme
+#  all <- cbind(Zonal = array_w_mean(rowMeans(na.rm = T,nc_zonal, dims = 3), scheme))                       # summarise zonal currents according to scheme
+  all <- cbind(Zonal = process_array(nc_zonal, scheme, count, collapse_days))
   return(all)
 }
 
