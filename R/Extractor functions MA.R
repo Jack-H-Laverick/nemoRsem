@@ -1,6 +1,76 @@
 
 #### slabR ####
 
+#' Exception handling for using slabR
+#'
+#' This function catches the special cases when arrays are not 3D, which causes errors for Armadillo in SlabR.
+#'
+#' @details The function checks how many depth and time steps there are in an array of NEMO-ERSEM output. The function
+#' then ensures that slabR is passed a 3D array, either by collapsing or applying the summary scheme over the time dimension,
+#' or if there are too few dimensions (because a depth layer is being extracted) a simple join is performed to the scheme.
+#'
+#' @param file the name of a netcdf file containing the title variables.
+#' @param scheme a summary scheme as expected by `array_w_mean()`.
+#' @param count an optional vector of steps to subset along. See ncdf4 documentation.
+#' @param collapse_days a logical switch setting whether to extract all days within a single netcdf file, or to take the mean across days.
+#' @return A matrix with a column of group averages per title variable. If multiple days have been extracted these run sequentially within a column.
+#' @family NEMO-ERSEM variable extractors
+#' @export
+NULL
+
+process_array <- function(array, scheme = scheme, count = count, collapse_days = TRUE) {
+
+  # If there are multiple depths and a single time step then slabR is fine as dim4 is dropped
+  if(count[3] != 1 & count[4] == 1) {
+
+    processed <- array_w_mean(array, scheme)                            # Summarise diffusivity according to scheme
+
+  }
+
+  # If there is only one depth layer and multiple time steps slabR breaks as we have matrices of data
+  # This is a special case that crops up when trying to interpolate depth layers, but finding that layer already exists
+  if(count[3] == 1 & count[4] != 1) {
+
+    # Either Collect all time steps
+    if(isFALSE(collapse_days)) {
+
+      processed <- reshape2::melt(array, varnames=c('x', 'y', "t"), value.name = "processed") %>%
+        right_join(scheme) %>%
+        `$`(processed)
+    }
+
+    # Or Average across time steps
+    if(isTRUE(collapse_days)) {
+
+      processed <- reshape2::melt(rowMeans(na.rm = T, array, dims = 2), varnames=c('x', 'y'), value.name = "processed") %>%
+        right_join(scheme) %>%
+        `$`(processed)
+    }
+
+  }
+
+  # If there are multiple time steps and depths slabr breaks as we have more than 3 dimensions
+  if(count[3] != 1 & count[4] != 1) {
+
+    # Either Collect all time steps by using apply on the 4th dimension
+    if(isFALSE(collapse_days)) {
+
+      processed <- as.vector(apply(array, 4, array_w_mean, scheme))   # Summarise diffusivity according to scheme
+
+    }
+
+    # Or Average across time steps
+    if(isTRUE(collapse_days)) {
+
+      processed <- array_w_mean(rowMeans(na.rm = T, array, dims = 3), scheme) # Summarise diffusivity according to scheme
+
+    }
+  }
+
+  return(processed)
+
+}
+
 #' Extract summaries from Mission Atlantic NEMO-ERSEM arrays using slabR
 #'
 #' These functions read in target variables from NEMO-ERSEM model outputs and return weighted averages
@@ -191,11 +261,11 @@ get_difvho_slabR   <- function(path, file, scheme, start = c(1,1,1,1), count = c
   # all <- cbind(                                                                # Bind as matrix
   #   Vertical_diffusivity = array_w_mean(rowMeans(na.rm = T,nc_dif, dims = 2), scheme))                       # Summarise diffusivity according to scheme
 
-  Vertical_diffusivity <- reshape2::melt(rowMeans(na.rm = T,nc_dif, dims = 2), varnames=c('x', 'y'), value.name = "Vertical_diffusivity") %>%
-    right_join(scheme)
+  # Vertical_diffusivity <- reshape2::melt(rowMeans(na.rm = T,nc_dif, dims = 2), varnames=c('x', 'y'), value.name = "Vertical_diffusivity") %>%
+  #   right_join(scheme)
 
   all <- cbind(                                                                # Bind as matrix
-    Vertical_diffusivity = Vertical_diffusivity$Vertical_diffusivity)
+    Vertical_diffusivity = process_array(nc_dif, collapse_days = collapse_days))
 
   return(all)
 }
@@ -211,11 +281,15 @@ get_wo_slabR   <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,
   # all <- cbind(                                                                # Bind as matrix
   #   Vertical_velocity = array_w_mean(rowMeans(na.rm = T,nc_vel, dims = 2), scheme))                          # Summarise vertical velocity according to scheme
 
-  Vertical_velocity <- reshape2::melt(rowMeans(na.rm = T,nc_vel, dims = 2), varnames=c('x', 'y'), value.name = "Vertical_velocity") %>%
-    right_join(scheme)
+  # Vertical_velocity <- reshape2::melt(rowMeans(na.rm = T,nc_vel, dims = 2), varnames=c('x', 'y'), value.name = "Vertical_velocity") %>%
+  #   right_join(scheme)
+
+  # all <- cbind(                                                                # Bind as matrix
+  #   Vertical_velocity = Vertical_velocity$Vertical_velocity)
 
   all <- cbind(                                                                # Bind as matrix
-    Vertical_velocity = Vertical_velocity$Vertical_velocity)
+    Vertical_velocity = process_array(nc_vel, collapse_days = collapse_days))
+
   return(all)
 }
 
