@@ -60,8 +60,11 @@ scheme_reframe <- function(slabr_scheme) {
 #' the weights needed to interpolate between the values using `calculate_proximity_weight`. If an sf polygon is provided,
 #' only points which fall within the polygon will be interpolated.
 #'
+#' The function will check whether an array layer already exists at your target depth. If it does,
+#' a scheme to extract the values at that layer is returned instead.
+#'
 #' @param space a list of latitudes, longitudes, and depths for NEMO-ERSEM model output, as returned by `get_spatial()`
-#' @param target_depth a depth (m) to interpolate a slice for.
+#' @param target_depth a depth to interpolate a slice for.
 #' @param sf an optional sf polygon to define the horizontal area of interest.
 #' @return A dataframe containing a slabR scheme.
 #' @family NEMO-ERSEM spatial tools
@@ -70,9 +73,6 @@ scheme_interp_slice <- function(space, target_depth, sf = NULL){
 
   bracket_depths <- c(max(space$nc_depth[space$nc_depth <= target_depth]), # Which depth in our layers is immediately below the target depth
                       min(space$nc_depth[space$nc_depth >= target_depth])) # and which is above
-
-  if(bracket_depths[1] == bracket_depths[2]) {
-    stop("Your target depth matches a provided depth value, there's no need to interpolate a new layer") }
 
   grid <- reshape2::melt(space$nc_lon) %>%
     rename(x = "Var1", y = "Var2", longitude = "value") %>%
@@ -85,18 +85,31 @@ scheme_interp_slice <- function(space, target_depth, sf = NULL){
 
     if(st_crs(points) != st_crs(sf)) points <- st_transform(points, st_crs(sf)) # Ensure points and sf share a projection
 
-    grid <- st_join(points, sf) %>%                           # Test wihch grid points are in the polygon
+    grid <- st_join(points, sf) %>%                           # Test which grid points are in the polygon
       st_drop_geometry() %>%                                  # Drop heavy geometry column
       drop_na()                                               # Drop points outside of the polygon
   }
 
+  if(bracket_depths[1] == bracket_depths[2]) { # Return a scheme for extraction
+    warning("Your target depth matches a provided depth value, there's no need to interpolate a new layer. Returning a scheme for subsetting.")
+
+    scheme <- grid %>%
+      group_by(y, x) %>%                                        # Group by each horizontal pixel
+      mutate(group = cur_group_id(),                            # Create a grouping column for the summary scheme
+             weight = 1,                                        # No need to average if subsetting
+             layer = which(space$nc_depth == depth[[1]]),       # Which array layer matches the depth we're extracting?
+             depth = target_depth) %>%
+      ungroup()
+
+  } else { # Return a scheme for interpolation
   scheme <- grid %>%
     group_by(y, x) %>%                                        # Group by each horizontal pixel
     mutate(group = cur_group_id(),                            # Create a grouping column for the summary scheme
            weight = map(depth, calculate_proximity_weight, target = target_depth), # Calculate the weights to interpolate between layers
            layer = list(which(space$nc_depth %in% depth[[1]]))) %>% # Which array layers match the depths we're interpolating?
     unnest(c(layer, weight, depth)) %>%                       # Open up the layer indices, weights, and the real world depths
-    ungroup()
+    ungroup() }
+
   return(scheme)
 }
 
@@ -115,10 +128,11 @@ scheme_interp_slice <- function(space, target_depth, sf = NULL){
 #' @param shallow a vector of a min and max depth (m) for the shallow layer to be averaged over.
 #' @param deep a vector of a min and max depth (m) for the deep layer to be averaged over.
 #' @param sf an optional sf polygon to define the horizontal area of interest.
+#' @param S_layers an array containing the depths at each voxel, when using S instead of T layers.
 #' @return A dataframe containing a slabR scheme.
 #' @family NEMO-ERSEM spatial tools
 #' @export
-scheme_strathE2E <- function(space, bathymetry, shallow, deep, sf = NULL){
+scheme_strathE2E <- function(space, bathymetry, shallow, deep, sf = NULL, S_layers = NULL){
 
   grid <- reshape2::melt(space$nc_lon) %>%
     rename(x = "Var1", y = "Var2", longitude = "value") %>%
@@ -131,13 +145,15 @@ scheme_strathE2E <- function(space, bathymetry, shallow, deep, sf = NULL){
 
     if(st_crs(points) != st_crs(sf)) points <- st_transform(points, st_crs(sf)) # Ensure points and sf share a projection
 
-    grid <- st_join(points, sf) %>%                           # Test wihch grid points are in the polygon
+    grid <- st_join(points, sf) %>%                           # Test which grid points are in the polygon
       st_drop_geometry() %>%                                  # Drop heavy geometry column
       drop_na()                                               # Drop points outside of the polygon
   }
 
   grid <- left_join(grid, bathymetry) %>%
     drop_na()
+
+if(is.null(S_layers)) {
 
   # Shallow slab
   shallow_scheme <- grid %>%
@@ -147,7 +163,6 @@ scheme_strathE2E <- function(space, bathymetry, shallow, deep, sf = NULL){
            weight = map2(Min_depth, Max_depth, .f = calculate_depth_share, depths = space$nc_depth), # Calculate the weights to interpolate between layers
            layer = list(which(space$nc_depth %in% depth[[1]]))) %>% # Which array layers match the depths we're interpolating?
     unnest(c(layer, weight, depth))                           # Open up the layer indices, weights, and the real world depths
-
 
   # Deep slab
   scheme <- grid %>%
@@ -163,6 +178,34 @@ scheme_strathE2E <- function(space, bathymetry, shallow, deep, sf = NULL){
     mutate(group = cur_group_id()) %>%                        # Create a grouping column for the summary scheme
     ungroup()
 
+} else {
+
+  # Shallow slab
+  shallow_scheme <- grid %>%
+    mutate(slab_layer = "1",
+           max_depth = ifelse(Bathymetry > shallow, shallow, Bathymetry),
+           min_depth = 0,
+           depths = map2(x, y, ~ S_layers[.x,.y,]),            # Get the vector of depths for this pixel
+           layer = list(1:dim(S_layers)[3])) %>%               # Which layers are these depths at?
+    mutate(weight = pmap(select(., max_depth, min_depth, depths), calculate_depth_share)) %>%  # Calculate the weights to interpolate between layers
+    unnest(c(layer, weight, depth))                             # Open up the layer indices, weights, and the real world depths
+
+  # Deep slab
+  scheme <- grid %>%
+    mutate(slab_layer = "2",
+           max_depth = ifelse(Bathymetry > deep, deep, Bathymetry),
+           min_depth = shallow,
+           depths = map2(x, y, ~ S_layers[.x,.y,]),           # Get the vector of depths for this pixel
+           layer = list(1:dim(S_layers)[3])) %>%               # Which layers are these depths at?
+    mutate(weight = pmap(select(., max_depth, min_depth, depths), calculate_depth_share)) %>%  # Calculate the weights to interpolate between layers
+    unnest(c(layer, weight, depth)) %>%                       # Open up the layer indices, weights, and the real world depths
+    rbind(shallow_scheme) %>%
+    filter(weight > 0) %>%                                   # Drop points below the seafloor
+    group_by(slab_layer, x, y) %>%                            # Group by each horizontal pixel
+    mutate(group = cur_group_id()) %>%                        # Create a grouping column for the summary scheme
+    ungroup()
+
+}
   return(scheme)
 }
 
