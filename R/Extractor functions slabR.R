@@ -16,8 +16,9 @@
 #' | grid_T_      | Salinity, temperature.|
 #' | grid_U_      | Zonal currents.|
 #' | grid_V_      | Meridional currents.|
-#' | grid_W_      | Vertical velocity, vertical eddy diffusivitiy.|
-#' | ptrc_T_      | N03, NH4, Detrital N, phytoplankton nitrogen content.|
+#' | grid_W_      | Vertical velocity.|
+#' | diad_        | Surface irradiance.|
+#' | ptrc_T_      | N03, NH4, POC, phytoplankton Chl-a.|
 #'
 #' Some function variants have different arguments:
 #'
@@ -33,6 +34,7 @@
 #' @param scheme_w as above but for grid_W files.
 #' @param start_w as above but for grid_W files.
 #' @param count_w as above but for grid_W files.
+#' @param scheme2d a separate summary scheme for the 2D light variable.
 #' @param ... soaks up unused function arguments passed by the wrapper functions handling file architecture.
 #' @return A matrix with a column of group averages per title variable for a single day.
 #' @family NEMO-ERSEM variable extractors
@@ -57,26 +59,45 @@ get_grid_T_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-
 
 #' @rdname extractors_slabR
 #' @export
+get_diad_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), scheme2d, ...) {
+
+  nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
+  nc_light <- ncdf4::ncvar_get(nc_raw, "SurfaceE", start[-3], count[-3])       # Extract a matrix of surface irradiance
+  ncdf4::nc_close(nc_raw)                                                      # You must close an open netcdf file when finished to avoid data loss
+
+  all <- cbind(                                                                # Bind as columns
+    Light = c(nc_light[scheme2d],                                              # Subset light instead of average as it's 2D
+              rep(NA, max(scheme$group)-length(scheme2d))))                    # Introduce NAs to fill deep layer summaries
+
+  return(all)
+}
+
+#' @rdname extractors_slabR
+#' @export
 get_ptrc_T_slabR <- function(path, file, scheme, start = c(1,1,1,1), count = c(-1,-1,-1,-1), ...) {
 
   nc_raw <- ncdf4::nc_open(paste0(path, file))                                 # Open up a netcdf file to see it's raw contents (var names)
   nc_NO3 <- ncdf4::ncvar_get(nc_raw, "N3n", start, count)                      # Extract an array for the variable
   nc_NH4 <- ncdf4::ncvar_get(nc_raw, "N4n", start, count)
-  nc_DET <- ncdf4::ncvar_get(nc_raw, "Q1n", start, count)
+#  nc_DET <- ncdf4::ncvar_get(nc_raw, "Q1n", start, count)
 #  nc_PHD <- ncdf4::ncvar_get(nc_raw, "PHD", start, count)
 #  nc_PHN <- ncdf4::ncvar_get(nc_raw, "PHN", start, count)
 #  nc_Phyt <- nc_PHD + nc_PHN
-  nc_Chl1 <- ncvar_get(nc_raw, "Chl1", start3D, count3D)
-  nc_Chl2 <- ncvar_get(nc_raw, "Chl2", start3D, count3D)
-  nc_Chl3 <- ncvar_get(nc_raw, "Chl3", start3D, count3D)
-  nc_Chl4 <- ncvar_get(nc_raw, "Chl4", start3D, count3D)
+  nc_POC1 <- ncdf4::ncvar_get(nc_raw, "R4c", start, count)
+  nc_POC2 <- ncdf4::ncvar_get(nc_raw, "R8c", start, count)
+  nc_Chl1 <- ncdf4::ncvar_get(nc_raw, "Chl1", start, count)
+  nc_Chl2 <- ncdf4::ncvar_get(nc_raw, "Chl2", start, count)
+  nc_Chl3 <- ncdf4::ncvar_get(nc_raw, "Chl3", start, count)
+  nc_Chl4 <- ncdf4::ncvar_get(nc_raw, "Chl4", start, count)
   nc_Chl <- nc_Chl1 + nc_Chl2 + nc_Chl3 + nc_Chl4 ; rm(nc_Chl1, nc_Chl2, nc_Chl3, nc_Chl4)
+  nc_POC <- nc_POC1 + nc_POC2 ; rm(nc_POC1, nc_POC2)
   ncdf4::nc_close(nc_raw)                                                          # You must close an open netcdf file when finished to avoid data loss
 
   all <- cbind(                                                                    # Bind as matrix
     NO3 = array_w_mean(nc_NO3, scheme),                                            # summarise dissolved nitrate according to scheme
     NH4 = array_w_mean(nc_NH4, scheme),                                            # summarise Dissolved ammonium according to scheme
-    Detritus = array_w_mean(nc_DET, scheme),                                       # summarise Detritus according to scheme
+    POC = array_w_mean(nc_POC, scheme),                                            # stand in for detritus
+#    Detritus = array_w_mean(nc_DET, scheme),                                      # summarise Detritus according to scheme
     Chlorophyll = array_w_mean(nc_Chl, scheme))                                    # summarise Chlorophyll according to scheme
     return(all)
 }
