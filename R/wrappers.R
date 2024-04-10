@@ -36,7 +36,7 @@ temporal_operation <- function(data, analysis = NULL, time_op = NULL, ...) {
   if(!is.null(analysis) & !is.null(time_op)) {
     stop("Use either 'analysis' or 'time_op' not both.")}
 
-    get <- match.fun(paste0("get_", data[1,"Type"], analysis))                # Change the extracting function based on file contents
+    get <- match.fun(paste0("get_", data[1,"Type"], "_", analysis))                # Change the extracting function based on file contents
 
   if(analysis %in% c("StrathE2E", "slabR")) {
 
