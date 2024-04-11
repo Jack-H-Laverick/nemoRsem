@@ -258,8 +258,6 @@ NE_volume_summary <- function(saved, ice_threshold = 0, ice = FALSE) {
   if (ice == TRUE) {
 
     Groups <- readRDS(file = saved) %>%                                          # Read in wide format data file
-      #    dplyr::filter(!weights < 0) %>%                                            # Drop points on land
-      #    dplyr::mutate(weights = dplyr::na_if(weights, 0)) %>%                      # Replace 0 weights with NA so vector lengths match for weighted mean
       tidyr::drop_na(Year, Shore) %>%                                            # Drop points outside of the polygons
       dplyr::group_by(Shore, Year, Month, slab_layer) %>%
       dplyr::mutate(Ice_pres = ifelse(Ice_conc < ice_threshold, 0, Ice_pres))    # Specify how much ice actually matters when labelling something as ice-affected
@@ -289,14 +287,15 @@ NE_volume_summary <- function(saved, ice_threshold = 0, ice = FALSE) {
       dplyr::group_by(Shore, Year, Month, slab_layer)
 
     Averaged <- Groups %>%
-      dplyr::summarise(Salinity_avg = stats::weighted.mean(Salinity, weights, na.rm = TRUE), # Get monthly mean salinity
-                       Temperature_avg = stats::weighted.mean(Temperature, weights, na.rm = TRUE),
-                       NO3_avg = stats::weighted.mean(NO3, weights, na.rm = TRUE),
-                       NH4_avg = stats::weighted.mean(NH4, weights, na.rm = TRUE),
-                       #Detritus_avg = stats::weighted.mean(Detritus, weights, na.rm = TRUE),
-                       Chlorophyll_avg = stats::weighted.mean(Chlorophyll, weights, na.rm = TRUE),
-                       Meridional_avg = stats::weighted.mean(Meridional, weights, na.rm = TRUE),
-                       Zonal_avg = stats::weighted.mean(Zonal, weights, na.rm = TRUE)) %>%
+      # dplyr::summarise(Salinity_avg = stats::weighted.mean(Salinity, weights, na.rm = TRUE), # Get monthly mean salinity
+      #                  Temperature_avg = stats::weighted.mean(Temperature, weights, na.rm = TRUE),
+      #                  NO3_avg = stats::weighted.mean(NO3, weights, na.rm = TRUE),
+      #                  NH4_avg = stats::weighted.mean(NH4, weights, na.rm = TRUE),
+      #                  #Detritus_avg = stats::weighted.mean(Detritus, weights, na.rm = TRUE),
+      #                  Chlorophyll_avg = stats::weighted.mean(Chlorophyll, weights, na.rm = TRUE),
+      #                  Meridional_avg = stats::weighted.mean(Meridional, weights, na.rm = TRUE),
+      #                  Zonal_avg = stats::weighted.mean(Zonal, weights, na.rm = TRUE)) %>%
+      dplyr::summarise(dplyr::across(dplyr::everything(), ~ mean(.x, na.rm = TRUE), .names = "{.col}_avg"))
       dplyr::ungroup()
   }
 
