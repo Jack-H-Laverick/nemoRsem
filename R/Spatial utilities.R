@@ -184,11 +184,13 @@ voronoi_grid <- function(points, area) {
 
 #' Summarise NEMO-ERSEM Output into Time Series Along Transects
 #'
-#' This function averages NEMO-ERSEM monthly summaries into time series for the target boundaries of StrathE2E.
+#' This function averages NEMO-ERSEM summaries into time series for the target boundaries of StrathE2E.
 #'
 #' The function subsets the NEMO-ERSEM grid according to the transects object provided. Water exchanges between
 #' model compartments are totaled. The boundary conditions of the model domain for variables needed by
-#' StrathE2E are summarised as a flow-weighted mean, applying the flow rate at each transect.
+#' StrathE2E are summarised as a flow-weighted mean, applying the flow rate at each transect. As transects metadata is bound
+#' to NEMO-ERSEM output, the function can handle daily or monthly summary objects, but the output will still be a monthly average
+#' as needed by StrathE2E.
 #'
 #' @param saved A dataframe containing a summarised month from NEMO-ERSEM model outputs.
 #' @param transects A dataframe containing the labelled transects along the model domain boundaries.
@@ -199,9 +201,9 @@ voronoi_grid <- function(points, area) {
 #'  \item{Element 2}{A dataframe containing the flow-weighted boundary conditions around the model domain.}}
 #' @family NEMO-MEDUSA averages
 #' @export
-NE_boundary_summary <- function(saved, transects, vars = c("NO3", "NH4", "Chlorophyll", "Temperature")) {
+NE_boundary_summary <- function(saved, transects, vars = c("NO3", "NH4", "Detritus")) {
 
-  Data <- readRDS(saved) %>%                                                  # Import a NM summary object
+  Data <- readRDS(saved) %>%                                                  # Import a NE summary object
     dplyr::select(-c(Shore, weights))                                         # Drop duplicated columns which vonflict
   data.table::setDT(Data, key = c("x", "y", "slab_layer"))                    # Convert to a data.table keyed spatially for quick summaries.
 
@@ -295,7 +297,7 @@ NE_volume_summary <- function(saved, ice_threshold = 0, ice = FALSE) {
       #                  Chlorophyll_avg = stats::weighted.mean(Chlorophyll, weights, na.rm = TRUE),
       #                  Meridional_avg = stats::weighted.mean(Meridional, weights, na.rm = TRUE),
       #                  Zonal_avg = stats::weighted.mean(Zonal, weights, na.rm = TRUE)) %>%
-      dplyr::summarise(dplyr::across(dplyr::everything(), ~ mean(.x, na.rm = TRUE), .names = "{.col}_avg"))
+      dplyr::summarise(dplyr::across(dplyr::everything(), ~ mean(.x, na.rm = TRUE), .names = "{.col}_avg")) %>%
       dplyr::ungroup()
   }
 
