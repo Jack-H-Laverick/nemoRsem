@@ -11,16 +11,16 @@
 #' @return A dataframe that can be passed to `NEMO_ERSEM` using pmap.
 #' @family NEMO-ERSEM spatial tools
 #' @export
-categorise_files <- function(dir, recursive = TRUE) {
+categorise_files <- function(dir, recursive = TRUE, full.names = TRUE) {
 
 
-  ersem_files <- list.files(dir, recursive = recursive, full.names = TRUE, pattern = ".nc") %>%  # Retunr netcdf files in the directory
+  ersem_files <- list.files(dir, recursive = recursive, full.names = full.names, pattern = ".nc") %>%  # Retunr netcdf files in the directory
     as.data.frame() %>%                                                                     # Turn the vector into a dataframe
-    tidyr::separate(".", into = c("Path", "File"), sep = "STRATH") %>%                      # Split file names from path for ease
-    dplyr::mutate(File = paste0("STRATH", File)) %>%                                        # Reintroduce separation character string
-    dplyr::mutate(date = stringr::str_sub(File, start = -9, end = -4),                      # Pull time information
-           Month = stringr::str_sub(date, start = 5, end = 6),
+    tidyr::separate(".", into = c("Path", "File"), sep = "\\d{4}/", extra = "merge") %>%
+    tidyr::separate(File, into = c("Forcing", "SSP", NA, "date"), sep = "_", remove = FALSE) %>%
+    dplyr::mutate(Month = stringr::str_sub(date, start = 5, end = 6),
            Year = stringr::str_sub(date, start = 1, end = 4)) %>%
+    dplyr::mutate(Path = paste0(Path, Year, "/")) %>%                                       # Reintroduce separation character string
     dplyr::mutate(String = dplyr::case_when(stringr::str_detect(File, "thetao_con") ~ "thetao_con-Temperature", # Categorise the file types
                             stringr::str_detect(File, "so_abs") ~ "so_abs-Salinity",
                             stringr::str_detect(File, "uo") ~ "uo-Zonal currents",
@@ -36,7 +36,7 @@ categorise_files <- function(dir, recursive = TRUE) {
                             stringr::str_detect(File, "P1") ~ "P1-Diatom nitrogen",
                             stringr::str_detect(File, "P234_n") ~ "P234_n-Other phytoplankton nitrogen")) %>%
     tidyr::separate("String", into = c("Type", "Name"), sep = "-") %>%                     # cheat way to succinctly get both a "type" and named variable column
-    dplyr::select(Path, File, date, Year, Month, Type, Name)                               # Limit to columns of use
+    dplyr::select(Path, File, date, Forcing, SSP, Year, Month, Type, Name)                               # Limit to columns of use
 
 }
 
@@ -261,7 +261,7 @@ NE_volume_summary <- function(saved, ice_threshold = 0, ice = FALSE) {
 
     Groups <- readRDS(file = saved) %>%                                          # Read in wide format data file
       tidyr::drop_na(Year, Shore) %>%                                            # Drop points outside of the polygons
-      dplyr::group_by(Shore, Year, Month, slab_layer) %>%
+      dplyr::group_by(Shore, Year, Month, slab_layer, Forcing, SSP) %>%
       dplyr::mutate(Ice_pres = ifelse(Ice_conc < ice_threshold, 0, Ice_pres))    # Specify how much ice actually matters when labelling something as ice-affected
 
     Ice <- dplyr::filter(Groups, Ice_pres > 0) %>%                               # Remove ice free pixels before averaging
@@ -286,7 +286,7 @@ NE_volume_summary <- function(saved, ice_threshold = 0, ice = FALSE) {
 
     Groups <- readRDS(file = saved) %>%                                          # Read in wide format data file
       tidyr::drop_na(Year, Shore) %>%                                            # Drop points outside of the polygons
-      dplyr::group_by(Shore, Year, Month, slab_layer)
+      dplyr::group_by(Shore, Year, Month, slab_layer, Forcing, SSP)
 
     Averaged <- Groups %>%
       # dplyr::summarise(Salinity_avg = stats::weighted.mean(Salinity, weights, na.rm = TRUE), # Get monthly mean salinity
@@ -321,10 +321,10 @@ NE_decadal_summary <- function(decade, dt) {
   if(dt == TRUE){                                                               # Run data.table method
     # data.table::setDT(decade)                                                 # set as a data.table, not needed if decade is already a data.table
     Averaged <- decade[, lapply(.SD, mean, na.rm = TRUE),                       # Average data columns which aren't groups
-                       by = c("longitude", "latitude", "Decade", "Month", "Shore", "slab_layer")] # Group by pixel and decade
+                       by = c("longitude", "latitude", "SSP", "Forcing", "Decade", "Month", "Shore", "slab_layer")] # Group by pixel and decade
   } else{                                                                       # Run dplyr method
     Averaged <- decade %>%
-      dplyr::group_by(longitude, latitude, Decade, Month, Shore, slab_layer) %>%# Group by pixel and decade
+      dplyr::group_by(longitude, latitude, SSP, Forcing, Decade, Month, Shore, slab_layer) %>%# Group by pixel and decade
       dplyr::summarise_all(mean, na.rm = TRUE) %>%                              # Average data columns
       dplyr::ungroup()                                                          # Ungroup
   }
