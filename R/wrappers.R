@@ -116,9 +116,10 @@ NEMO_ERSEM <- function(data, analysis = NULL, time_op = NULL, out_dir = "./Objec
   if(!is.null(analysis) & !is.null(time_op)) {
     stop("Use either 'analysis' or 'time_op' not both.")}
 
-  if(analysis == "StrathE2E") {
-    Month <- data[1,5] ; Year <- data[1,4]                                    # Pull date
+    Month <- data[1,7] ; Year <- data[1,6]                                    # Pull date
+    Forcing <- data[1,4] ; SSP <- data[1,5]
 
+  if(analysis == "StrathE2E") {
     print("Consider using slabR with scheme_strathE2E instead of StrathE2E")
 
     timestep <- split(data, f = list(data$Type)) %>%                          # Split out the files for this month by type, so they can be averaged together
@@ -127,13 +128,14 @@ NEMO_ERSEM <- function(data, analysis = NULL, time_op = NULL, out_dir = "./Objec
       cbind(summary) %>%                                                      # Add coordinates and depth labels
       filter(Bathymetry != 0) %>%                                             # Drop points on land
       mutate(Year = as.integer(Year),                                         # Add time
-             Month =  as.integer(Month)) %>%
+             Month =  as.integer(Month),
+             Forcing = Forcing,                                               # simulation
+             SSP =  SSP) %>%
       dplyr::right_join(crop) %>%                                             # Cut out rows outside of plotting window
-      saveRDS(file = paste0(out_dir, "/NE.", Month, ".", Year, ".rds"))       # save out a data object for one whole month
+      saveRDS(file = paste0(out_dir, "/NE.", Forcing, ".", SSP, ".", Month, ".", Year, ".rds"))       # save out a data object for one whole month
   }
 
   if(analysis == "slabR") {
-    Month <- data[1,5] ; Year <- data[1,4]                                    # Pull date
 
     timestep <- split(data, f = list(data$Type)) %>%                          # Split out the files for this month by type, so they can be averaged together
       purrr::map(temporal_operation, analysis = analysis, ...)                # Pull a whole month of data from a single file type
@@ -144,8 +146,10 @@ NEMO_ERSEM <- function(data, analysis = NULL, time_op = NULL, out_dir = "./Objec
     timestep <- as.data.frame(timestep) %>%
       cbind(summary) %>%                                                      # Add coordinates and depth labels
       mutate(Year = as.integer(Year),                                         # Add time
-             Month =  as.integer(Month)) %>%
-      saveRDS(file = paste0(out_dir, "/NE.", Month, ".", Year, ".rds")) # save out a data object for one whole month
+             Month =  as.integer(Month),
+             Forcing = Forcing,                                               # simulation
+             SSP =  SSP) %>%
+      saveRDS(file = paste0(out_dir, "/NE.", Forcing, ".", SSP, ".", Month, ".", Year, ".rds")) # save out a data object for one whole month
   }
 
   if(analysis == "1D") {
@@ -157,14 +161,15 @@ NEMO_ERSEM <- function(data, analysis = NULL, time_op = NULL, out_dir = "./Objec
         data.table::setDT(.y, key = c("Date", "Layer"))
         .y[.x]}) %>%
       mutate(Month = stringr::str_sub(Date, start = 5, end = 6),
-             Year = stringr::str_sub(Date, start = 1, end = 4)) %>%
-      saveRDS(file = paste0(out_dir, "/NE.", .$Month[1], ".", .$Year[1], ".rds")) # save out a data object for one whole month
+             Year = stringr::str_sub(Date, start = 1, end = 4),
+             Forcing = Forcing,
+             SSP =  SSP) %>%
+      saveRDS(file = paste0(out_dir, "/NE.", Forcing, ".", SSP, ".", Month, ".", Year, ".rds")) # save out a data object for one whole month
   }}
 
   if(length(time_op > 0)) {
 
   if(time_op == "collect") {
-    Month <- data[1,5] ; Year <- data[1,4]                                    # Pull date
 
     timestep <- split(data, f = list(data$Type)) %>%                          # Split out the files for this month by type, so they can be averaged together
       purrr::map(temporal_operation, time_op = "collect", ...)                # Pull a whole month of data from a single file type
@@ -175,8 +180,10 @@ NEMO_ERSEM <- function(data, analysis = NULL, time_op = NULL, out_dir = "./Objec
     timestep <- as.data.frame(timestep) %>%
       cbind(summary) %>%                                                      # Add coordinates and depth labels
       mutate(Year = as.integer(Year),                                         # Add time
-             Month =  as.integer(Month)) %>%
-      saveRDS(file = paste0(out_dir, "/NE.", Month, ".", Year, ".rds")) # save out a data object for one whole month
+             Month =  as.integer(Month),
+             Forcing = Forcing,                                               # simulation
+             SSP =  SSP) %>%
+      saveRDS(file = paste0(out_dir, "/NE.", Forcing, ".", SSP, ".", Month, ".", Year, ".rds")) # save out a data object for one whole month
   }}
 
 }
