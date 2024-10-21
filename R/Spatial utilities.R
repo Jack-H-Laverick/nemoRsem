@@ -217,7 +217,7 @@ NE_boundary_summary <- function(saved, transects, vars = c("NO3", "NH4", "Detrit
 
   water <- join[, .(Flow = sum(Flow, na.rm = T)),                             # Tally up water movements
                 by = c("Shore", "slab_layer", "Direction",                    # By exchanges we want to keep track of
-                       "Neighbour", "Month", "Year")] %>%
+                       "Neighbour", "Month", "Year", "Forcing", "SSP")] %>%
     tidyr::drop_na()                                                          # The NA transects introduce a dead group, remove.
 
   ## Summarise boundary conditions
@@ -226,7 +226,7 @@ NE_boundary_summary <- function(saved, transects, vars = c("NO3", "NH4", "Detrit
   boundary <- join[perimeter == T & Direction == "In",                        # For transects which bound the perimeter of the model domain
                    lapply(.SD, weighted.mean, w = Flow, na.rm = T),           # Flow-weighted mean of target variables
                    by = c("Shore", "slab_layer", "Neighbour",                 # By groups we want to keep track of
-                          "Month", "Year"),
+                          "Month", "Year", "Forcing", "SSP"),
                    .SDcols = vars] %>%                                        # Specify target variables
     tidyr::drop_na() %>%                                                      # The NA transects introduce a dead group, remove.
     dplyr::mutate(Date = as.Date(paste(15, Month, Year, sep = "/"), format = "%d/%m/%Y"),

@@ -31,14 +31,17 @@ decadal <- function(saved) {
 #' @export
 ts_plot <- function(var) {
 
-  ts <- ggplot2::ggplot(TS, aes(x=date, y= get(var), colour = Compartment)) +
-    ggplot2::geom_line(size = 0.2) +
+
+  ts <- ggplot2::ggplot(TS, aes(x=date, y= get(var), colour = Forcing, linetype = SSP)) +
+#    ggplot2::geom_line(size = 0.2) +
     ggplot2::geom_smooth(span = 0.08, size = 0.2, se = FALSE) +
     ggplot2::theme_minimal() +
     ggplot2::theme(legend.position = "top") +
     ggplot2::labs(caption = paste("NE", var, "time series by compartment"), y = var) +
+    ggplot2::facet_grid(rows = vars(Compartment)) +
+    ggplot2::scale_linetype_manual(values = c(hist = "dotted", ssp126 = "solid", ssp370 = "dashed"))
     NULL
-  ggplot2::ggsave(paste0("./Figures/NEMO-ERSEM/TS_", var, ".png"), plot = ts, width = 16, height = 10,
+  ggplot2::ggsave(paste0("./Figures/NEMO-ERSEM/TS_", var, ".png"), plot = ts, width = 16, height = 21,
                   units = "cm", dpi = 500, bg = "white")
 
 }
@@ -56,7 +59,7 @@ ts_plot <- function(var) {
 point_plot <- function(data, var) {
 
   decade <- data$Decade[1]; depth <- data$slab_layer[1]                             # Find out what the data is
-
+  ssp <- data$SSP[1]; forcing <- data$Forcing[1];
   if(depth == "D" & var %in% c("Ice", "Ice_conc", "Ice_Thickness", "Snow_Thickness")) {
     print("Skipped deep ice plot") } else {
 
@@ -65,12 +68,12 @@ point_plot <- function(data, var) {
       map <- ggplot2::ggplot() +                                                            # Create the base
         ggplot2::theme_minimal() +
         ggplot2::labs(title = paste("Decade:", decade),
-                      subtitle = paste("Water layer:", depth), x = NULL, y = NULL) +
+                      subtitle = paste("SSP:", ssp, "Forcing:", forcing, "Water layer:", depth), x = NULL, y = NULL) +
         ggplot2::geom_raster(data = data, aes(x=x, y=y, fill = get(var))) +
         viridis::scale_fill_viridis(option = "viridis", name = var, na.value = "red") +
         ggplot2::facet_wrap(vars(Month)) +
         NULL
-      ggplot2::ggsave(paste0("./Figures/NEMO-ERSEM/grids/map ", var, " ", depth, " ", decade, ".png"),
+      ggplot2::ggsave(paste0("./Figures/NEMO-ERSEM/grids/map ", var, " ", ssp, " ", forcing, " ", depth, " ", decade, ".png"),
                       plot = map, scale = 1, width = 32, height = 20, units = "cm", dpi = 500, bg = "white")
     }
 }
