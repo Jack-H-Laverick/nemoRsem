@@ -4,7 +4,7 @@
 \alias{scheme_strathE2E}
 \title{Return a slabR Scheme for a StrathE2E Summary}
 \usage{
-scheme_strathE2E(space, bathymetry, shallow, deep, sf = NULL)
+scheme_strathE2E(space, bathymetry, shallow, deep, sf = NULL, S_layers = NULL)
 }
 \arguments{
 \item{space}{a list of latitudes, longitudes, and depths for NEMO-ERSEM model output, as returned by `get_spatial()`}
@@ -16,6 +16,8 @@ scheme_strathE2E(space, bathymetry, shallow, deep, sf = NULL)
 \item{deep}{a vector of a min and max depth (m) for the deep layer to be averaged over.}
 
 \item{sf}{an optional sf polygon to define the horizontal area of interest.}
+
+\item{S_layers}{an array containing the depths at each voxel, when using S instead of T layers.}
 }
 \value{
 A dataframe containing a slabR scheme.
@@ -34,6 +36,7 @@ within the polygon will be interpolated.
 Other NEMO-ERSEM spatial tools: 
 \code{\link{calculate_depth_share}()},
 \code{\link{calculate_proximity_weight}()},
+\code{\link{categorise_files}()},
 \code{\link{netcdf_scheme_helpers}},
 \code{\link{scheme_column}()},
 \code{\link{scheme_interp_slice}()},

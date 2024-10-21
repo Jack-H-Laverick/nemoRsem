@@ -9,7 +9,7 @@ scheme_interp_slice(space, target_depth, sf = NULL)
 \arguments{
 \item{space}{a list of latitudes, longitudes, and depths for NEMO-ERSEM model output, as returned by `get_spatial()`}
 
-\item{target_depth}{a depth (m) to interpolate a slice for.}
+\item{target_depth}{a depth to interpolate a slice for.}
 
 \item{sf}{an optional sf polygon to define the horizontal area of interest.}
 }
@@ -24,11 +24,15 @@ The function takes the spatial information for a whole NEMO-ERSEM file and deter
 above and below a target depth. These two slices are used to interpolate the new layer. The function calculates
 the weights needed to interpolate between the values using `calculate_proximity_weight`. If an sf polygon is provided,
 only points which fall within the polygon will be interpolated.
+
+The function will check whether an array layer already exists at your target depth. If it does,
+a scheme to extract the values at that layer is returned instead.
 }
 \seealso{
 Other NEMO-ERSEM spatial tools: 
 \code{\link{calculate_depth_share}()},
 \code{\link{calculate_proximity_weight}()},
+\code{\link{categorise_files}()},
 \code{\link{netcdf_scheme_helpers}},
 \code{\link{scheme_column}()},
 \code{\link{scheme_strathE2E}()},

@@ -44,6 +44,7 @@ calculate_depth_share(depths, min_depth = 400, max_depth = 600)
 \seealso{
 Other NEMO-ERSEM spatial tools: 
 \code{\link{calculate_proximity_weight}()},
+\code{\link{categorise_files}()},
 \code{\link{netcdf_scheme_helpers}},
 \code{\link{scheme_column}()},
 \code{\link{scheme_interp_slice}()},

@@ -28,6 +28,7 @@ calculate_proximity_weight(c(0, 100), target = 80)
 \seealso{
 Other NEMO-ERSEM spatial tools: 
 \code{\link{calculate_depth_share}()},
+\code{\link{categorise_files}()},
 \code{\link{netcdf_scheme_helpers}},
 \code{\link{scheme_column}()},
 \code{\link{scheme_interp_slice}()},

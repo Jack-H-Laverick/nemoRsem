@@ -53,8 +53,18 @@ reference:
 - title: Spatial utilities
   desc: Handle spatial weighting for averages, depth layers, and map projections.
   contents:
+  - categorise_files
   - calculate_depth_share
   - calculate_proximity_weight
   - get_spatial
   - xyindex_to_nindex
   - voronoi_grid
+  - NE_boundary_summary
+  - NE_volume_summary
+  - NE_decadal_summary
+- title: Inspection tools
+  desc: Aides for plotting data extractions as checks.
+  contents:
+  - decadal
+  - ts_plot
+  - point_plot

@@ -3,6 +3,7 @@
 \name{extractors_slabR}
 \alias{extractors_slabR}
 \alias{get_grid_T_slabR}
+\alias{get_diad_slabR}
 \alias{get_ptrc_T_slabR}
 \alias{get_grid_W_slabR}
 \alias{get_grid_V_slabR}
@@ -15,6 +16,16 @@ get_grid_T_slabR(
   scheme,
   start = c(1, 1, 1, 1),
   count = c(-1, -1, -1, -1),
+  ...
+)
+
+get_diad_slabR(
+  path,
+  file,
+  scheme,
+  start = c(1, 1, 1, 1),
+  count = c(-1, -1, -1, -1),
+  scheme2d,
   ...
 )
 
@@ -67,6 +78,8 @@ get_grid_U_slabR(
 
 \item{...}{soaks up unused function arguments passed by the wrapper functions handling file architecture.}
 
+\item{scheme2d}{a separate summary scheme for the 2D light variable.}
+
 \item{scheme_w}{as above but for grid_W files.}
 
 \item{start_w}{as above but for grid_W files.}
@@ -89,8 +102,9 @@ Each model output file type contains a different set of variables, extracted by 
    grid_T_ \tab Salinity, temperature. \cr
    grid_U_ \tab Zonal currents. \cr
    grid_V_ \tab Meridional currents. \cr
-   grid_W_ \tab Vertical velocity, vertical eddy diffusivitiy. \cr
-   ptrc_T_ \tab N03, NH4, Detrital N, phytoplankton nitrogen content. \cr
+   grid_W_ \tab Vertical velocity. \cr
+   diad_ \tab Surface irradiance. \cr
+   ptrc_T_ \tab N03, NH4, POC, phytoplankton Chl-a. \cr
 }
 
 
@@ -103,6 +117,8 @@ own \code{start_w} and \code{count_w}.
 Other NEMO-ERSEM variable extractors: 
 \code{\link{NEMO_ERSEM}()},
 \code{\link{extractors_1D}},
-\code{\link{get_spatial}()}
+\code{\link{extractors_MA}},
+\code{\link{get_spatial}()},
+\code{\link{process_array}()}
 }
 \concept{NEMO-ERSEM variable extractors}

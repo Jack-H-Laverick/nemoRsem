@@ -58,7 +58,9 @@ Also, working on independent monthly packets of data means we can parallelise an
 \seealso{
 Other NEMO-ERSEM variable extractors: 
 \code{\link{extractors_1D}},
+\code{\link{extractors_MA}},
 \code{\link{extractors_slabR}},
-\code{\link{get_spatial}()}
+\code{\link{get_spatial}()},
+\code{\link{process_array}()}
 }
 \concept{NEMO-ERSEM variable extractors}

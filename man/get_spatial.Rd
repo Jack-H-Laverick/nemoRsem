@@ -4,12 +4,12 @@
 \alias{get_spatial}
 \title{Get Latitudes, Longitudes, & Depths From NEMO-ERSEM Model Outputs}
 \usage{
-get_spatial(file, grid_W = F)
+get_spatial(file, depthvar = NULL, depthdim = NULL)
 }
 \arguments{
 \item{file}{The full name of a netcdf file.}
 
-\item{grid_W}{Is the file a grid_W file, TRUE or FALSE. Needed as the depth variable is unique to this file type.}
+\item{depthvar}{The name of the depth dimension in a netcdf file (when extracting values from dimension metadata).}
 }
 \value{
 A list of three elements:
@@ -23,13 +23,14 @@ A list of three elements:
 This function gets the latitudes, longitudes, and depths which define the spatial location of points in an array of NEMO-ERSEM outputs.
 }
 \details{
-Each variable of interest in the netcdf file is imported, and then collected into a list. A T/F switch is included for
-when the file is a grid_W type as the depth levels are different and stored differently.
+Each variable of interest in the netcdf file is imported, and then collected into a list.
 }
 \seealso{
 Other NEMO-ERSEM variable extractors: 
 \code{\link{NEMO_ERSEM}()},
 \code{\link{extractors_1D}},
-\code{\link{extractors_slabR}}
+\code{\link{extractors_MA}},
+\code{\link{extractors_slabR}},
+\code{\link{process_array}()}
 }
 \concept{NEMO-ERSEM variable extractors}

@@ -30,6 +30,7 @@ option.
 Other NEMO-ERSEM spatial tools: 
 \code{\link{calculate_depth_share}()},
 \code{\link{calculate_proximity_weight}()},
+\code{\link{categorise_files}()},
 \code{\link{netcdf_scheme_helpers}},
 \code{\link{scheme_interp_slice}()},
 \code{\link{scheme_strathE2E}()},

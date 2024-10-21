@@ -56,7 +56,9 @@ grid_W_ expects it's own \code{scheme_w} as depth levels are different between t
 \seealso{
 Other NEMO-ERSEM variable extractors: 
 \code{\link{NEMO_ERSEM}()},
+\code{\link{extractors_MA}},
 \code{\link{extractors_slabR}},
-\code{\link{get_spatial}()}
+\code{\link{get_spatial}()},
+\code{\link{process_array}()}
 }
 \concept{NEMO-ERSEM variable extractors}
